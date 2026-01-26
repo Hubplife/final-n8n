@@ -1,0 +1,208 @@
+{
+  "name": "IIT-Final-Project",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "index",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        -176
+      ],
+      "id": "0fbbd8db-2b3a-4cb1-ab3b-aae9e13dd0d6",
+      "name": "Webhook",
+      "webhookId": "4adcd298-bbcf-4a83-aadd-84b672983503"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        192,
+        -176
+      ],
+      "id": "c0448769-16bb-4c4a-b710-fa52b5f4a389",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol={{ $json.stock_symbol }}&apikey=demo",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        368,
+        0
+      ],
+      "id": "7de8a1e1-b1a0-40ac-ac1a-258bdafe3e5c",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let result = Array();\nlet weeks = $input.first().json[\"Weekly Time Series\"];\nfunction formatDate(d) {\n  return d.toISOString().slice(0, 10);\n}\n\nfunction getLast5WeekDates() {\n  const dates = [];\n  const today = new Date();\n\n  // 1️⃣ Ongoing week → yesterday\n  const yesterday = new Date(today);\n  yesterday.setDate(today.getDate() - 1);\n  dates.push(formatDate(yesterday));\n\n  // 2️⃣ Find most recent Friday BEFORE yesterday\n  const friday = new Date(yesterday);\n  const day = friday.getDay(); // Sun=0 ... Fri=5\n  const diffToFriday = (day >= 5) ? day - 5 : day + 2;\n  friday.setDate(friday.getDate() - diffToFriday);\n\n  // 3️⃣ Previous 4 Fridays\n  for (let i = 0; i < 4; i++) {\n    dates.push(formatDate(friday));\n    friday.setDate(friday.getDate() - 7);\n  }\n\n  return dates;\n}\nlet last_five_weeks = getLast5WeekDates();\nlast_five_weeks.forEach((date, index) => {  console.log(index, \": \" ,weeks[date]); result[index] = weeks[date] })\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        0
+      ],
+      "id": "a1b983c0-c572-4e5a-b73a-c14c2959526c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "formTitle": "Stock details",
+        "formDescription": "Provide symbol of stock you want to check:",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "stock_symbol",
+              "placeholder": "=eg.: IBM",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        0
+      ],
+      "id": "3aae2acc-a2b0-4bd1-aac3-be86a2c0f8f5",
+      "name": "On form submission",
+      "webhookId": "37227035-d426-4079-99be-a688c15c02c2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "=content-type",
+              "value": "=application/json"
+            },
+            {
+              "name": "=Authorization",
+              "value": "=Bearer {{$env.API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"model\": \"openai/gpt-oss-20b\",\n\"stream\": false,\n\"temperature\": 0.7,\n\"messages\": [\n  {\"role\": \"system\", \"content\": \"You are an advisor, supposed to help with decision on which stock is valid to buy, based on the recent month data, which is provided.\" },\n  {\n    \"role\": \"user\", \"content\": \"{{ $json }}. This is data from last 5 weeks, \"\n  }\n]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        816,
+        0
+      ],
+      "id": "443ba270-87a6-48c0-8e6f-6ded2a8c981b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "formTitle": "User's email",
+        "formDescription": "Provide us with an email, so we can inform you if this stock is worth of buying",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "placeholder": "j.nowak@a.bc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        144
+      ],
+      "id": "fe482f9a-0343-452d-8123-ebbf783fe57d",
+      "name": "On form submission1",
+      "webhookId": "c943f46d-fc1e-434d-b8b3-e633803a7a91"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "40fb4c33-8684-4529-bbac-436c925a3413",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b20333c22524a57d8874dc2821e8bb35f6864702b89d342782e64f2ccb524537"
+  },
+  "id": "dR7WzLni0kho5iky",
+  "tags": []
+}
