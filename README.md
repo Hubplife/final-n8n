@@ -7,4 +7,5 @@ We use a form submission to collect data from the user. The user enters only the
 **The role of AI:**
 AI has a huge role in the automatized project. It replaces a human in analyzing process and decison makeing. Its task is to decide if the client should buy a stock or not. 
 
-**How the system can be executed and tested:** To test the system user have to fill the form with the stock symbol. It is assured, that user writes correct proper symbol. A few seconds later, there will be messege from discord bot, which conveys AI information. There need to be all information that are sent to the bot.
+**How the system can be executed and tested:** 
+To test the system user have to fill the form with the stock symbol. It is assured, that user writes correct proper symbol. A few seconds later, there will be messege from discord bot, which conveys AI information. There need to be all information that are sent to the bot.
